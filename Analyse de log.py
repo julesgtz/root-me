@@ -24,7 +24,7 @@ delta = []
 for i in range(1,len(logs)):
     _time = logs[i-1][30:38]
     time = logs[i][30:38]
-    datetime.datetime.()
+    datetime.datetime
     delta.append(
         int(time)-int(_time)
     )
@@ -36,5 +36,4 @@ for log in logs:
     d = b64.b64decode(t64).decode()
     print(time, delta[idx], d)
     idx+=1
-
 

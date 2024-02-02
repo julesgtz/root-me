@@ -70,7 +70,6 @@ def solve(content):
 
         print(f"Failed to decode : {clear_content}")
 
-
 def receive(client):
     result = True
     while result:
