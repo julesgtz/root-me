@@ -1,17 +1,19 @@
 import hashlib
 from threading import Thread, Lock
 from time import sleep, time
+from itertools import tee
+
 
 # Credit https://github.com/applied-risk/snmpv3brute
 # 80% du code a été trouvé sur github, juste ajouter des threads
-# 45 secondes pour trouver le mot de passe / 2k4 mdp par seconde
+# 38 secondes pour trouver le mot de passe / 2k8 mdp par seconde
 
 GREEN = "\033[92m"
 YELLOW = "\033[33m"
 RED = "\033[91m"
 WHITE = "\033[97m"
 
-NB_THREAD = 15 # 100 = 45s, 50 = 46s, 25 = 45s, 15 = 46s
+NB_THREAD = 15 # 100 = 45s, 50 = 46s, 25 = 40s, 15 = 46s
 
 
 class Solution:
@@ -20,12 +22,12 @@ class Solution:
     msg_2 = bytes.fromhex(msg.replace(target, "000000000000000000000000"))
     engineid = bytes.fromhex("80001f8880e9bd0c1d12667a5100000000")
 
-    def __init__(self, passwords):
+    def __init__(self):
         self.lock = Lock()
-        self.passwords = passwords
+        self.passwords, temp_passwords = tee(self.get_pwd())
+        self.total_passwords = sum(1 for _ in temp_passwords)
         self.thread = []
         self.pwd = None
-        self.total_passwords = len(passwords)
         self.passwords_processed = 0
         self.progress_lock = Lock()
         self.progress = Thread(target=self.print_progress)
@@ -38,10 +40,15 @@ class Solution:
             password = None
 
             with self.lock:
-                if self.passwords:
-                    password = self.passwords[0].rstrip()
-                    self.passwords.pop(0)
-                    self.passwords_processed += 1
+                try:
+                    if self.passwords:
+                        password = next(self.passwords)
+                        self.passwords_processed += 1
+                except StopIteration:
+                    print("error stop")
+                    pass
+                except Exception as e:
+                    print(e)
             if password:
                 if not len(password) == 0:
                     try:
@@ -103,8 +110,11 @@ class Solution:
         print(f"{GREEN}[+]{WHITE} All tasks finished")
         print(f"{YELLOW}[!]{WHITE} Was running for : {time()-start:.2f}s")
 
+    def get_pwd(self):
+        with open("dict.txt", 'r', encoding='utf-8', errors='replace') as f:
+            for ligne in f:
+                yield ligne.strip()
 
-with open("dict.txt", 'r', encoding='utf-8', errors='replace') as f:
-    passwords = f.readlines()
+
 if __name__ == "__main__":
-    Solution(passwords=passwords).run()
+    Solution().run()
